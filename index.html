@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>For You 🎂</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💌</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Quicksand:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.min.js"
+} }
+</script>
+</head>
+<body>
+<canvas id="stage"></canvas>
+<div id="vignette"></div>
+<div id="fade"></div>
+
+<div id="hint" class="uiText">click the envelope to open it</div>
+<div id="toast" class="uiText"></div>
+<div id="wishHint" class="uiText">make a wish… then tap the candles</div>
+<div id="actions">
+  <button id="relight">✨ relight the candles</button>
+  <button id="replay">↻ replay</button>
+</div>
+<button id="mute" aria-label="toggle sound">🔊</button>
+
+<div id="loader"><div class="env">💌</div><p>a gift has arrived…</p></div>
+
+<script type="module" src="main.js"></script>
+</body>
+</html>
