@@ -397,7 +397,7 @@ stripeVariants.forEach(t => { t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat
 
 const flames = [];
 const candleLight = new THREE.PointLight(0xffb36b, 0, 4.5, 2);
-candleLight.position.set(0, cakeTopY + .55, .22);
+candleLight.position.set(0, cakeTopY + .48, .22);
 cake.add(candleLight);
 candleLight.userData.base = 0;
 
@@ -408,17 +408,17 @@ for (let i = 0; i < CONFIG.candles; i++) {
   const tex = stripeVariants[i % 3];
   const candleMat = new THREE.MeshStandardMaterial({ map:tex, roughness:.5 });
   const capMat = new THREE.MeshStandardMaterial({ color:0xeee2d3, roughness:.5 });
-  const candle = new THREE.Mesh(new THREE.CylinderGeometry(.034, .034, .34, 14), [candleMat, capMat, capMat]);
-  candle.position.set(cx, cakeTopY + .17, cz);
+  const candle = new THREE.Mesh(new THREE.CylinderGeometry(.034, .034, .26, 14), [candleMat, capMat, capMat]);
+  candle.position.set(cx, cakeTopY + .13, cz);
   candle.castShadow = true;
   cake.add(candle);
   const wick = new THREE.Mesh(new THREE.CylinderGeometry(.006, .006, .05, 6),
     new THREE.MeshStandardMaterial({ color:0x2a2020 }));
-  wick.position.set(cx, cakeTopY + .36, cz);
+  wick.position.set(cx, cakeTopY + .28, cz);
   cake.add(wick);
 
   const fg = new THREE.Group();
-  fg.position.set(cx, cakeTopY + .43, cz);
+  fg.position.set(cx, cakeTopY + .35, cz);
   const glow = new THREE.Sprite(new THREE.SpriteMaterial({ map:glowTex, color:0xffc07a,
     blending:THREE.AdditiveBlending, depthWrite:false, transparent:true, opacity:0 }));
   glow.scale.setScalar(.42);
@@ -484,14 +484,14 @@ const topperTex = canvasTex(1024, 512, (ctx, w, h) => {
 const topper = new THREE.Group();
 const stickMat = new THREE.MeshStandardMaterial({ color:0xe8d9c2, roughness:.6 });
 for (const sx of [-.4, .4]) {
-  const stick = new THREE.Mesh(new THREE.CylinderGeometry(.014, .014, .8, 8), stickMat);
-  stick.position.set(sx, cakeTopY + .38, -.25);
+  const stick = new THREE.Mesh(new THREE.CylinderGeometry(.014, .014, .72, 8), stickMat);
+  stick.position.set(sx, cakeTopY + .34, -.25);
   topper.add(stick);
 }
 const topCard = new THREE.Mesh(new THREE.PlaneGeometry(1.1, .55),
   new THREE.MeshStandardMaterial({ map:topperTex, transparent:true, alphaTest:.08, roughness:.85,
     color:0xaf9f86, side:THREE.DoubleSide }));
-topCard.position.set(0, cakeTopY + .7, -.19);
+topCard.position.set(0, cakeTopY + .64, -.19);
 topper.add(topCard);
 cake.add(topper);
 
@@ -530,7 +530,9 @@ const sign = new THREE.Mesh(new THREE.PlaneGeometry(6.4, 3.2),
 const signGroup = new THREE.Group();
 signGroup.position.set(0, 3.7, -3.2);
 signGroup.add(sign);
-sceneB.add(signGroup);
+const signPivot = new THREE.Group();   // follows most of the camera sway so the sign drifts only ~20%
+signPivot.add(signGroup);
+sceneB.add(signPivot);
 function fitSign() {   // keep the sign inside the visible width at its depth (phones)
   const halfW = (7.6 + 3.2) * Math.tan(THREE.MathUtils.degToRad(21)) * camB.aspect;
   signGroup.scale.setScalar(Math.min(1, .92 * 2 * halfW / 6.4));
@@ -757,7 +759,8 @@ const balloons = [];
 const BALLOON_COLORS = [0xf291b1, 0x9fd8bf, 0xc9b1e8, 0xffce7a, 0x9fc7ef, 0xf6c3d0];
 for (let i = 0; i < 6; i++) {
   const g = new THREE.Group();
-  const mat = new THREE.MeshStandardMaterial({ color:BALLOON_COLORS[i], roughness:.28, metalness:.05 });
+  const mat = new THREE.MeshStandardMaterial({ color:BALLOON_COLORS[i], roughness:.28, metalness:.05,
+    emissive:BALLOON_COLORS[i], emissiveIntensity:.3 });
   const ball = new THREE.Mesh(new THREE.SphereGeometry(.3, 22, 18), mat);
   ball.scale.set(1, 1.16, 1);
   const knot = new THREE.Mesh(new THREE.ConeGeometry(.05, .07, 10), mat);
@@ -766,12 +769,20 @@ for (let i = 0; i < 6; i++) {
   const string = new THREE.Line(strGeo, new THREE.LineBasicMaterial({ color:0xffffff, transparent:true, opacity:.35 }));
   g.add(ball, knot, string);
   const side = i % 2 === 0 ? -1 : 1;
-  g.position.set(side * (2.4 + Math.random()*1.4), -1.2 - Math.random()*1.5, -2 - Math.random()*1.8);
   g.visible = false;
   sceneB.add(g);
-  balloons.push({ g, target:2.6 + Math.random()*1.4, phase:Math.random()*9, rise:.32 + Math.random()*.15, going:false });
+  balloons.push({ g, side, phase:Math.random()*9, rise:.4, going:false });
 }
-function launchBalloons() { for (const b of balloons) { b.g.visible = true; b.going = true; } }
+function placeBalloon(b, y) {   // x spread depends on aspect so phones keep them in view
+  const t = THREE.MathUtils.clamp((camB.aspect - .45) / 1.45, 0, 1);   // 0 = phone portrait, 1 = wide screen
+  b.g.position.set(
+    b.side * (THREE.MathUtils.lerp(1.15, 2.4, t) + Math.random() * THREE.MathUtils.lerp(.35, 1.4, t)),
+    y, -2 - Math.random() * 1.8);
+  b.rise = .38 + Math.random() * .25;
+}
+function launchBalloons() {
+  balloons.forEach((b, i) => { placeBalloon(b, 1.2 - i * .9 + Math.random() * .3); b.g.visible = true; b.going = true; });
+}
 
 /* ============================================================================
    AUDIO — all synthesized
@@ -1149,6 +1160,7 @@ function tick() {
     stageT += dt;
     rig.rotation.y = Math.sin(stageT * .07) * (RM ? .05 : .12) + pointer.sx * (RM ? .04 : .15);
     rig.rotation.x = pointer.sy * .05;
+    signPivot.rotation.y = rig.rotation.y * .8;
     camB.lookAt(0, 1.5, 0);
 
     const flick = Math.sin(elapsed*11.3) + .6*Math.sin(elapsed*17.7) + .4*Math.sin(elapsed*29.1);
@@ -1174,10 +1186,10 @@ function tick() {
 
     for (const b of balloons) {
       if (!b.going) continue;
-      if (b.g.position.y < b.target) b.g.position.y += b.rise * dt;
-      else b.g.position.y = b.target + Math.sin(elapsed * .6 + b.phase) * .07;
+      b.g.position.y += b.rise * dt;                                         // float up and out of frame…
       b.g.position.x += Math.sin(elapsed * .4 + b.phase) * .0011;
       b.g.rotation.z = Math.sin(elapsed * .5 + b.phase) * .07;
+      if (b.g.position.y > 7.5) placeBalloon(b, -1.5 - Math.random() * 2);   // …then drift back in from below
     }
 
     topCard.rotation.z = Math.sin(elapsed * .9) * .02;
